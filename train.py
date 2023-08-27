@@ -6,6 +6,11 @@ from transformers import Wav2Vec2CTCTokenizer, Wav2Vec2FeatureExtractor, Wav2Vec
 import configs
 
 import warnings
+
+from utils import compute_metrics_wrapper
+from transformers import Trainer
+
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
 
@@ -39,13 +44,20 @@ processor = Wav2Vec2Processor(
 train_annotations_path  = os.path.join(configs.ANNOTATION_FOLDER, 'train.csv')
 df = pd.read_csv(train_annotations_path)
 
+# from collections import defaultdict
+# all_f = os.listdir('data/raw/train_mp3s')
+# exist_dict = defaultdict(lambda: False)
+# for x in all_f:
+#     exist_dict[x.replace('.mp3', '')]=True
+
+
 #getting train and valid dfs
 train_df = df[df['split']=='train'].reset_index(drop=True)
 valid_df = df[df['split']=='valid'].reset_index(drop=True)
 
 
-train_df = train_df[train_df['id'].apply(lambda x: exist_dict[x])]
-valid_df = valid_df[valid_df['id'].apply(lambda x: exist_dict[x])]
+# train_df = train_df[train_df['id'].apply(lambda x: exist_dict[x])]
+# valid_df = valid_df[valid_df['id'].apply(lambda x: exist_dict[x])]
 print(train_df.shape, valid_df.shape)
 
 #creating train and validation dataset
@@ -78,8 +90,6 @@ print(f"trainable = {trainable_param}")
 
 data_collator = DataCollatorCTCWithPadding(processor, padding=True)
 
-from utils import compute_metrics_wrapper
-from transformers import Trainer
 
 compute_metrics = compute_metrics_wrapper(processor)
 
