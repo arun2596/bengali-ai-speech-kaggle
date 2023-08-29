@@ -7,7 +7,7 @@ import configs
 
 import warnings
 
-from utils import compute_metrics_wrapper
+from utils import compute_metrics_wrapper, preprocess_logits_for_metrics
 from transformers import Trainer
 
 
@@ -52,9 +52,9 @@ df = pd.read_csv(train_annotations_path)
 
 
 #getting train and valid dfs
+
 train_df = df[df['split']=='train'].reset_index(drop=True)
 valid_df = df[df['split']=='valid'].reset_index(drop=True)
-
 
 # train_df = train_df[train_df['id'].apply(lambda x: exist_dict[x])]
 # valid_df = valid_df[valid_df['id'].apply(lambda x: exist_dict[x])]
@@ -79,6 +79,10 @@ model = Wav2Vec2ForCTC.from_pretrained(
     vocab_size=len(processor.tokenizer),
 )
 
+#fixing ctc zero eval loss 
+#occurs when the input is much smaller than the expected output seq
+model.config.ctc_zero_infinity = True
+
 # Freezing encoder layers.
 model.freeze_feature_encoder()
 
@@ -102,6 +106,7 @@ trainer = Trainer(
     eval_dataset=valid_dataset,   
     tokenizer=processor.feature_extractor,
     callbacks=[EarlyStoppingCallback(early_stopping_patience=configs.w2v_config.early_stopping_patience)],
+    preprocess_logits_for_metrics=preprocess_logits_for_metrics,
 )
 
 trainer.train()

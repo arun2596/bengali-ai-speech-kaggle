@@ -5,6 +5,7 @@ import numpy as np
 
 import re
 
+import torch
 
 class compute_metrics_wrapper:
     def __init__(self, processor):
@@ -13,8 +14,7 @@ class compute_metrics_wrapper:
         self.wer = WER()
 
     def __call__(self, pred):
-        pred_logits = pred.predictions
-        pred_ids = np.argmax(pred_logits, axis=-1)
+        pred_ids = pred.predictions
 
         pred.label_ids[pred.label_ids == -100] = self.processor.tokenizer.pad_token_id
         
@@ -27,6 +27,10 @@ class compute_metrics_wrapper:
 
         return {"wer": wer, "cer": cer}
 
+
+def preprocess_logits_for_metrics(logits, labels):
+    pred_ids = torch.argmax(logits, dim=-1)
+    return pred_ids
 
 
 # Regex for matching zero witdh joiner variations.
